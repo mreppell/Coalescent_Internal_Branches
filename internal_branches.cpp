@@ -249,11 +249,11 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 		    c_probs(csize,cbegin) = atof(break_line[cbegin].c_str());
 		  }   
 		} else {
-		  std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		  std::cerr << "Incorrect number of rows in " << sfile << ", maximum branch size is " << csize << " for sample size " << line << std::endl;
 		  exit(1);
 		}
 	      } else {
-		std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		std::cerr << "Incorrect number of rows in " << sfile << ", maximum branch size is " << csize << " for sample size " << line << std::endl;
 		exit(1);
 	      }
 	    }
@@ -530,11 +530,13 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
 			std::cout << std::endl;
 		      } 
 		    }else {
-		      std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		      //std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		  std::cerr << "Incorrect number of rows in " << file << ", maximum branch size is " << csize << " for sample size " << line << std::endl;    
 		      exit(1);
 		    }
 		  } else {
-		    std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		    //std::cerr << "Incorrect number of rows for entry " << line << std::endl;
+		    std::cerr << "Incorrect number of rows in " << file << ", maximum branch size is " << csize << " for sample size " << line << std::endl;
 		    exit(1);
 		  }
 		}
@@ -967,26 +969,35 @@ void getLengthDistribution(unsigned int& samplesize,int& csize,MatrixXd& eprobs,
       double start = 0;
       double val = 0;
       
-      for (int ii=0;ii<rstarts.size();++ii) {
-	if ((stp > start) && (stp <= (start + rstarts[ii]))) {
-	  stint = ii;
-	  break;
+      int jj = 0;
+      while (stint==-1) {
+	if ((stp > start) && (stp <= (start + rstarts[jj]))) {
+	  stint = jj;
 	} else {
-	  start+=rstarts[ii];
+	  start+=rstarts[jj];
+	}
+	++jj;
+	if (jj==rstarts.size()) {
+	  stp = getunif();
+	  jj = 0;
+	  start = 0;
 	}
       }
+ 
       start = 0;
-      for (int ii=stint;ii<eprobs.row(stint).size();++ii) {
-	if ((enp > start) && (enp <= (start + eprobs(stint,ii)))) {
-	  stent = ii;
-	  break;
+      jj = stint;
+      while (stent==-1) {
+	if ((enp > start) && (enp <= (start + eprobs(stint,jj)))) {
+	  stent = jj;
 	} else {
-	  start+=eprobs(stint,ii);
+	  start+=eprobs(stint,jj);
 	}
-      }
-      if ((stint==-1) || (stent==-1)) {
-	std::cerr << "Error choosing branch start/end\n";
-	exit(1);
+	++jj;
+	if (jj==eprobs.cols()) {
+	  enp = getunif();
+	  jj = stint;
+	  start = 0;
+	}
       }
       
       for (int ii=stint;ii<stent;++ii) {
@@ -1028,7 +1039,7 @@ void getLengthDistribution(unsigned int& samplesize,int& csize,MatrixXd& eprobs,
 
   for (int i=0;i<breaks.size();++i) {
     std::cout << csize << " " << samplesize << " " << breaks[i] << " ";
-    printf("%5.4f",c_counts[i]/((double) gene));
+    printf("%5.6f",c_counts[i]/((double) gene));
     std::cout << std::endl;
   }
 }
@@ -1060,7 +1071,6 @@ void getR2probs(int& csize,unsigned int& samplesize,bool expected,MatrixXd& epro
     }
   }
 
-
   std::vector<double> current_lengths;
   if (expected==true) {
     current_lengths = expected_lengths;
@@ -1076,6 +1086,7 @@ void getR2probs(int& csize,unsigned int& samplesize,bool expected,MatrixXd& epro
    }
 
   double evals = 0;
+  double geno_gt_one = 0;
   
   for (unsigned int gene=0;gene<gnum;++gene) {
     
@@ -1112,6 +1123,7 @@ void getR2probs(int& csize,unsigned int& samplesize,bool expected,MatrixXd& epro
     }
     evals+=(double) br_num;
     if (br_num > 0) {
+      geno_gt_one++;
       for (int ii=0;ii<br_num;++ii) {
 	double stp = getunif();
 	double enp = getunif();
@@ -1120,30 +1132,50 @@ void getR2probs(int& csize,unsigned int& samplesize,bool expected,MatrixXd& epro
 	double start = 0;
 	double val = 0;
 	
-	for (int ii=0;ii<rstarts.size();++ii) {
-	  if ((stp > start) && (stp <= (start + rstarts[ii]))) {
-	    stint = ii;
-	    break;
+	int jj = 0;
+	while (stint==-1) {
+	  if ((stp > start) && (stp <= (start + rstarts[jj]))) {
+	    stint = jj;
 	  } else {
-	    start+=rstarts[ii];
+	    start+=rstarts[jj];
+	  }
+	  ++jj;
+	  if (jj==rstarts.size()) {
+	    stp = getunif();
+	    jj = 0;
+	    start = 0;
 	  }
 	}
+	// for (int ii=0;ii<rstarts.size();++ii) {
+	//   if ((stp > start) && (stp <= (start + rstarts[ii]))) {
+	//     stint = ii;
+	//     break;
+	//   } else {
+	//     start+=rstarts[ii];
+	//   }
+	// }
 	start = 0;
-	for (int ii=stint;ii<eprobs.row(stint).size();++ii) {
-	  if ((enp > start) && (enp <= (start + eprobs(stint,ii)))) {
-	    stent = ii;
-	    break;
+	jj = stint;
+	while (stent==-1) {
+	  if ((enp > start) && (enp <= (start + eprobs(stint,jj)))) {
+	    stent = jj;
 	  } else {
-	    start+=eprobs(stint,ii);
+	    start+=eprobs(stint,jj);
+	  }
+	  ++jj;
+	  if (jj==eprobs.cols()) {
+	    enp = getunif();
+	    jj = stint;
+	    start = 0;
 	  }
 	}
-	if ((stint==-1) || (stent==-1)) {
-	  std::cerr << "Error choosing branch start/end (2)\n";
-	  exit(1);
-	}
+	//if ((stint==-1) || (stent==-1)) {
+	//  std::cerr << "Error choosing branch start/end (2)\n";
+	//  exit(1);
+	//}
       
-	for (int ii=stint;ii<stent;++ii) {
-	  val+=current_lengths[ii];	
+	for (int kk=stint;kk<stent;++kk) {
+	  val+=current_lengths[kk];	
 	}
 
 	branches.push_back(val);
@@ -1158,10 +1190,10 @@ void getR2probs(int& csize,unsigned int& samplesize,bool expected,MatrixXd& epro
       final_val+=(numerator/denominator);     
     }
   }
-  final_val = final_val/((double) gnum);
+  final_val = final_val/geno_gt_one;
 
   std::cout << csize << " " << samplesize << " ";
-  printf("%5.4f",final_val);
+  printf("%5.6f",final_val);
   std::cout << std::endl;
   
 }  
@@ -1245,31 +1277,47 @@ void getGenePortions(int& csize,unsigned int& samplesize,bool expected,MatrixXd&
       int stent = -1;
       double start = 0;
       double val = 0;
-	
-      for (int ii=0;ii<rstarts.size();++ii) {
-	if ((stp > start) && (stp <= (start + rstarts[ii]))) {
-	  stint = ii;
-	  break;
+
+      int jj = 0;
+      while (stint==-1) {
+	if ((stp > start) && (stp <= (start + rstarts[jj]))) {
+	  stint = jj;
 	} else {
-	  start+=rstarts[ii];
+	  start+=rstarts[jj];
+	}
+	++jj;
+	if (jj==rstarts.size()) {
+	  stp = getunif();
+	  jj = 0;
+	  start = 0;
 	}
       }
+      // for (int ii=0;ii<rstarts.size();++ii) {
+      //   if ((stp > start) && (stp <= (start + rstarts[ii]))) {
+      //     stint = ii;
+      //     break;
+      //   } else {
+      //     start+=rstarts[ii];
+      //   }
+      // }
       start = 0;
-      for (int ii=stint;ii<eprobs.row(stint).size();++ii) {
-	if ((enp > start) && (enp <= (start + eprobs(stint,ii)))) {
-	  stent = ii;
-	  break;
+      jj = stint;
+      while (stent==-1) {
+	if ((enp > start) && (enp <= (start + eprobs(stint,jj)))) {
+	  stent = jj;
 	} else {
-	  start+=eprobs(stint,ii);
+	  start+=eprobs(stint,jj);
+	}
+	++jj;
+	if (jj==eprobs.cols()) {
+	  enp = getunif();
+	  jj = stint;
+	  start = 0;
 	}
       }
-      if ((stint==-1) || (stent==-1)) {
-	std::cerr << "Error choosing branch start/end (2)\n";
-	exit(1);
-      }
-      
-      for (int ii=stint;ii<stent;++ii) {
-	val+=current_lengths[ii];	
+	 
+      for (int kk=stint;kk<stent;++kk) {
+	val+=current_lengths[kk];	
       }
       
       branches.push_back(val);
@@ -1294,9 +1342,9 @@ void getGenePortions(int& csize,unsigned int& samplesize,bool expected,MatrixXd&
     }
     
     std::cout << csize << " " << samplesize << " ";
-    printf("%lu %4.3f %4.3f",branches.size(),sum_length,variance);
+    printf("%lu %4.4f %4.4f",branches.size(),sum_length,variance);
     for (int i=0;i<branches.size();++i) {
-      std::cout << " " << branches[i];
+         std::cout << " " << branches[i];
     }
     std::cout << std::endl;
     
@@ -1321,7 +1369,7 @@ int main(int argc, char** argv) {
     cmd.add(outPut);
     TCLAP::ValueArg<int> branchToGen("","bn","For each size given, this number of random branch lengths will be generated, output is two columns, first with size, second with length",false,1,"int");
     cmd.add(branchToGen);
-    TCLAP::ValueArg<double> rSeed("","seed","Random number generator seed",false,-9,"double");
+    TCLAP::ValueArg<unsigned int> rSeed("","seed","Random number generator seed",false,1,"unsigned int");
     cmd.add(rSeed);
     TCLAP::SwitchArg expectedValues("","expected","Use expected values instead of randomly generated coalescent times",false);
     cmd.add(expectedValues);
@@ -1338,7 +1386,7 @@ int main(int argc, char** argv) {
     std::string efiles = endProb.getValue();
     std::string prebfiles = bNum.getValue();
     std::string presizes = siZes.getValue();
-    double randseed = rSeed.getValue();
+    unsigned int randseed = rSeed.getValue();
     std::string output = outPut.getValue();
     std::string presamplesize = sampleSize.getValue();
     bool expected = expectedValues.getValue();
@@ -1383,8 +1431,8 @@ int main(int argc, char** argv) {
     }
 
     prgType rng;
-    double seed = time(0);
-    if (randseed != -9) {
+    unsigned int seed = time(0);
+    if (randseed != 1) {
       seed = randseed;
     }
     rng.seed(seed);
@@ -1427,6 +1475,10 @@ int main(int argc, char** argv) {
 	  if (output.compare("branch_numbers")==0) {
 	    for (int re=0;re<sizes.size();++re) {
 	      int csize = sizes[re];
+	      if (header==true) {
+		std::cout << "SampleSize BranchSize NumberOfBranches Probability\n";
+		header=false;
+	      }
 	      vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
 	      did_something=true;
 	    }
