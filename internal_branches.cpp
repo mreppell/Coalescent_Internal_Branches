@@ -1470,51 +1470,55 @@ int main(int argc, char** argv) {
 	}
 	did_something = true;
       } else {
-	for (int ss=0;ss<sample_sizes.size();++ss) {
-	  unsigned int samplesize = sample_sizes[ss];
-	  if (output.compare("branch_numbers")==0) {
-	    for (int re=0;re<sizes.size();++re) {
-	      int csize = sizes[re];
-	      if (header==true) {
-		std::cout << "SampleSize BranchSize NumberOfBranches Probability\n";
-		header=false;
-	      }
-	      vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
-	      did_something=true;
-	    }
-	  } else {
-	    for (int re=0;re<sizes.size();++re) {
-	      int csize = sizes[re];
-	      MatrixXd eprobs = getEndTimes(samplesize,efiles,emit,output);    
-	      MatrixXd sprobs = getStartTimes(csize,samplesize,emit,sfiles,output);
-	      if (output.compare("length_distribution")==0) {
+	if ((output.compare("branch_numbers")==0) || (output.compare("length_distribution")==0) || (output.compare("r2_prob")==0) || (output.compare("genealogy_portions")==0)) {
+
+	  for (int ss=0;ss<sample_sizes.size();++ss) {
+	    unsigned int samplesize = sample_sizes[ss];
+	    if (output.compare("branch_numbers")==0) {
+	      for (int re=0;re<sizes.size();++re) {
+		int csize = sizes[re];
 		if (header==true) {
-		  std::cout << "BranchSize SampleSize Break CDF\n";
+		  std::cout << "SampleSize BranchSize NumberOfBranches Probability\n";
 		  header=false;
 		}
-		getLengthDistribution(samplesize,csize,eprobs,sprobs,prebreaks,rng,expected,gnum);
+		vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
 		did_something=true;
-	      } else {
-		if (output.compare("r2_prob")==0) {
+	      }
+	    } else {
+	      for (int re=0;re<sizes.size();++re) {
+		int csize = sizes[re];
+		MatrixXd eprobs = getEndTimes(samplesize,efiles,emit,output);    
+		MatrixXd sprobs = getStartTimes(csize,samplesize,emit,sfiles,output);
+		if (output.compare("length_distribution")==0) {
 		  if (header==true) {
-		    std::cout << "BranchSize SampleSize ProbR2" << std::endl;
-		    header = false;
+		    std::cout << "BranchSize SampleSize Break CDF\n";
+		    header=false;
 		  }
-		  vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
-		  getR2probs(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
+		  getLengthDistribution(samplesize,csize,eprobs,sprobs,prebreaks,rng,expected,gnum);
 		  did_something=true;
 		} else {
-		  if (output.compare("genealogy_portions")==0) {
+		  if (output.compare("r2_prob")==0) {
 		    if (header==true) {
-		      std::cout << "BranchSize SampleSize NumBranches SumLength Variance IndvBranches\n";
-		      header=false;
+		      std::cout << "BranchSize SampleSize ProbR2" << std::endl;
+		      header = false;
 		    }
 		    vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
-		    getGenePortions(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
+		    getR2probs(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
 		    did_something=true;
+		  } else {
+		    if (output.compare("genealogy_portions")==0) {
+		      if (header==true) {
+			std::cout << "BranchSize SampleSize NumBranches SumLength Variance IndvBranches\n";
+			header=false;
+		      }
+		      vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
+		      getGenePortions(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
+		      did_something=true;
+		    }
 		  }
 		}
 	      }
+
 	    }
 	  }
 	}

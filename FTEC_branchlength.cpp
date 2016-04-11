@@ -201,7 +201,7 @@ void propogateMutation(vector<Branch_t> & Current_Tree,int line) {
 //Going branch by branch from the final branch and generating the number of mutations on each branch, their location, and then calling the propogate function to grab mutations higher on the tree
 void populateMutations(vector<Branch_t> & Current_Tree,prgType& rng,vector<double> & Variant_Pos,double theta) {
     double n = Current_Tree.size();
-    for (int i=n-1;i>-1;--i) {
+    for (int i=Current_Tree.size()-1;i>-1;--i) {
         double length = Current_Tree[i].length;        
         double mut_rate = (theta/2)*length;
         int num_muts=0;
@@ -619,7 +619,7 @@ void removeFullMutations(vector<Branch_t> & Tree,vector<double> & Pos) {
 } 
 
 //This function checks to see if all segments have individually reached their MRCA
-int allMRCA(vector<Branch_t> & Tree,double & total_seglength,bool subdivision,int & pop1_size,double & pop2_size,int & num_rem) {
+int allMRCA(vector<Branch_t> & Tree,double & total_seglength,bool subdivision,int & pop1_size,int & pop2_size,int & num_rem) {
     
     multimap<int, int> branch_count_match;
     multimap<double, int> all_segs_per_branch;
@@ -1055,9 +1055,9 @@ int main(int argc, char** argv) {
         cmd.add(subDiv);
         TCLAP::ValueArg<double> mutRate("m", "mutation_rate", "REQUIRED: Mutation rate m, this is the per base mutation rate multiplied by the number of bases being simulated, along with value entered for -N FTEC calculates the value theta as 4Nm",true,-1,"double");
         cmd.add(mutRate);
-        TCLAP::ValueArg<double> numExt("n", "number_samples", "REQUIRED: Total number of samples to simulate",true,-1,"double");
+        TCLAP::ValueArg<int> numExt("n", "number_samples", "REQUIRED: Total number of samples to simulate",true,-1,"double");
         cmd.add(numExt);
-        TCLAP::ValueArg<double> pop2Size("","p2n", "Number of simulated samples drawn from population 2",false,-1,"double");
+        TCLAP::ValueArg<int> pop2Size("","p2n", "Number of simulated samples drawn from population 2",false,-1,"double");
         cmd.add(pop2Size);
         TCLAP::ValueArg<double> pop2Prop("","p2prop", "Size of population 2 relative to population 1",false,0,"double");
         cmd.add(pop2Prop);
@@ -1105,7 +1105,7 @@ int main(int argc, char** argv) {
         cmd.add(lengthed);
         TCLAP::ValueArg<double> mSize("","merge_size","Size of merged population as proportion of population 1 starting size",false,-9,"double");
         cmd.add(mSize);
-        TCLAP::ValueArg<double> rSeed("","seed","Random number generator seed",false,-9,"double");
+        TCLAP::ValueArg<unsigned int> rSeed("","seed","Random number generator seed",false,1,"unsigned int");
         cmd.add(rSeed);
          
         cmd.parse(argc,argv);      
@@ -1233,13 +1233,13 @@ int main(int argc, char** argv) {
         }
         double tao = popMerge.getValue();
         if (tao!=-1) {cout << "--merge_time " << tao << " ";}
-        double outer_pop2_size = pop2Size.getValue();
+        int outer_pop2_size = pop2Size.getValue();
         if (outer_pop2_size!=-1) {cout << "--p2n " << outer_pop2_size << " ";}
         double pop2_prop = pop2Prop.getValue(); 
         if (pop2_prop!=0) {cout << "--p2prop " << pop2_prop << " ";}
         double time_grow2 = timeGrow2.getValue();
         if (time_grow2!=-1) {cout << "--t2 " << time_grow2 << " ";}
-        double gro2 = typeGrowth2.getValue();
+        int gro2 = typeGrowth2.getValue();
         if (gro2!=-1) {cout << "--g2 " << gro2 << " ";}
         double beta2 = B2.getValue();
         if (beta2!=0) {cout << "--a2 " << beta2 << " ";}
@@ -1256,14 +1256,14 @@ int main(int argc, char** argv) {
         int mtimes_size = mtimes.size();
         int mig2_size = mig2.size();
         int mtimes2_size = mtimes2.size();
-        double randseed = rSeed.getValue();
+        unsigned int randseed = rSeed.getValue();
         
         clock_t start = clock();
 
         //Uniform Number Generator setup
         prgType rng;
-        double seed = time(0);
-        if (randseed != -9) {
+        unsigned int seed = time(0);
+        if (randseed != 1) {
             seed = randseed;
         }
         rng.seed(seed);
@@ -1513,7 +1513,7 @@ int main(int argc, char** argv) {
         vector<double> Recomb_Pos;
         Recomb_Pos.push_back(0);
         Recomb_Pos.push_back(1);
-        double pop2_size = outer_pop2_size;
+        int pop2_size = outer_pop2_size;
         int pop1_size = 0;
         double ttot = 0;
         double theta = 4*bigN*mutation;
