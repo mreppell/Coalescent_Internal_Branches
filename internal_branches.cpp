@@ -736,6 +736,42 @@ void fillMatrix(vector<double>& probs, int m, vector<vector<double> > Tree, int 
   }
 }
     
+	//   std::vector<std::string> pre_pre_in_line;
+	//   std::vector<std::string> pre_in_line;
+	//   std::vector<std::string> pre_in_line2;
+	//   std::string predelim = "=";
+	//   std::string predelim2 = ",";
+	  
+	//     split(line,predelim2,pre_pre_in_line);
+	//     split(pre_pre_in_line[0],predelim,pre_in_line);
+	//     if (pre_in_line[0].compare("n")==0) {
+	//       int current_n = atoi(pre_in_line[1].c_str());
+	//       if (current_n > size) {
+	// 	split(pre_pre_in_line[1],predelim,pre_in_line2);
+	// 	int current_size = atoi(pre_in_line2[1].c_str());
+	// 	if (current_size==size) {
+	// 	  std::string in_line;
+	// 	  std::vector<std::string> in_in_line;
+	// 	  getline(myfile,in_line);
+	// 	  split(in_line,delim1,in_in_line);
+	// 	  if (in_in_line.size()==Tree[current_n].size()) {
+	// 	    for (int ii=0;ii<in_in_line.size();++ii) {
+	// 	      Tree[current_n][ii] = atof(in_in_line[ii].c_str());
+	// 	    }
+	// 	    done.push_back(current_n);
+	// 	  } else {
+	// 	    std::cerr << "Number of probabilties in file for size " << size << " Current_N " << current_n << " does not match expectations: " << in_in_line.size() << " in file " << Tree[current_n].size() << " expected\n";
+	// 	    exit(1);
+	// 	  }
+	// 	}
+	//       } else {
+	// 	std::string in_line;
+	// 	getline(myfile,in_line);
+	//       }
+	//     }
+	//   }
+	// }
+	// myfile.close();
 
 vector<double> getBnums(int& size,unsigned int& nn,std::string& file,bool& emit,std::string& output) {
 
@@ -770,60 +806,38 @@ vector<double> getBnums(int& size,unsigned int& nn,std::string& file,bool& emit,
     
   } else {
     
+    vector<int> witnessed;
+    for (int m=0;m<=size;++m) {
+      witnessed.push_back(0);
+    }
+
     for (int m=size+1;m<=nn;++m) {
       
       vector<double> c_prob;
       for (int i=0;i<(m/size)+1;++i) {
 	c_prob.push_back(0);
       }            
-      
+      witnessed.push_back((m/size)+1);
       Tree.push_back(c_prob);
     }
     
-    std::vector<int> done;
     const char* fn = file.c_str();
     std::ifstream myfile (fn);
-    std::string line;
+    std::string preline1;
       
     if (myfile.is_open()) {
       
-	while(getline(myfile,line)) {
+	while(getline(myfile,preline1)) {
 	  
-	  std::vector<std::string> pre_pre_in_line;
-	  std::vector<std::string> pre_in_line;
-	  std::vector<std::string> pre_in_line2;
-	  std::string predelim = "=";
-	  std::string predelim2 = ",";
+	  std::vector<std::string> preline2;
 	  std::string delim1 = " ";
-	  
-	  if (!line.empty()) {
-	    split(line,predelim2,pre_pre_in_line);
-	    split(pre_pre_in_line[0],predelim,pre_in_line);
-	    if (pre_in_line[0].compare("n")==0) {
-	      int current_n = atoi(pre_in_line[1].c_str());
-	      if (current_n > size) {
-		split(pre_pre_in_line[1],predelim,pre_in_line2);
-		int current_size = atoi(pre_in_line2[1].c_str());
-		if (current_size==size) {
-		  std::string in_line;
-		  std::vector<std::string> in_in_line;
-		  getline(myfile,in_line);
-		  split(in_line,delim1,in_in_line);
-		  if (in_in_line.size()==Tree[current_n].size()) {
-		    for (int ii=0;ii<in_in_line.size();++ii) {
-		      Tree[current_n][ii] = atof(in_in_line[ii].c_str());
-		    }
-		    done.push_back(current_n);
-		  } else {
-		    std::cerr << "Number of probabilties in file for size " << size << " Current_N " << current_n << " does not match expectations: " << in_in_line.size() << " in file " << Tree[current_n].size() << " expected\n";
-		    exit(1);
-		  }
-		}
-	      } else {
-		std::string in_line;
-		getline(myfile,in_line);
-	      }
-	    }
+	  split(preline1,delim1,preline2);
+	  int current_n = atoi(preline2[0].c_str());
+	  int current_size = atoi(preline2[1].c_str());
+	  if (current_size==size) {
+	    int current_bnum = atoi(preline2[2].c_str());
+	    Tree[current_n][current_bnum] = atof(preline2[3].c_str());
+	    witnessed[current_n]--;
 	  }
 	}
 	myfile.close();
@@ -832,27 +846,34 @@ vector<double> getBnums(int& size,unsigned int& nn,std::string& file,bool& emit,
       exit(1);
     }
 
-    std::sort (done.begin(), done.end());
-    
-    int done_ind = 0;
-    
-    for (int m=size+1;m<=nn;++m) {
-      
-      if (m==done[done_ind]) {
-	++done_ind;
-	std::cout << "Using file of " << m << std::endl;
+    std::vector<bool> done;
+    for (int i=0;i<=nn;++i) {
+      //std::cerr << witnessed[i] << std::endl;
+      if (witnessed[i]==0) {
+	done.push_back(true);
       } else {
-
-	vector<double> c_prob;
-	for (int i=0;i<(m/size)+1;++i) {
-	  c_prob.push_back(0);
-	}            
-      
-	fillMatrix(c_prob,m,Tree,size);            
-	Tree[m] = c_prob;
-	std::cout << "Calculating for " << m << std::endl;
+	done.push_back(false);
       }
     }
+    
+    if ((done[nn]==false) || ((output.compare("branch_numbers")==0) && (emit))) {
+
+      for (int m=size+1;m<=nn;++m) {
+	if (done[m]==false) {
+	  vector<double> c_prob;
+	  for (int i=0;i<(m/size)+1;++i) {
+	    c_prob.push_back(0);
+	  }         
+	  fillMatrix(c_prob,m,Tree,size);            
+	  Tree[m] = c_prob;
+	  //std::cerr << "Calculating for " << m << std::endl;
+	} else {
+	  //std::cerr << "Using infor in file for " << m << std::endl;
+	}
+      }
+
+    }
+
   }
 
   if (output.compare("branch_numbers")==0) {    
