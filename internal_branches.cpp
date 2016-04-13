@@ -222,6 +222,9 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	    if (current_n==nn) {
 	      exact_done = true;
 	    }
+	    if (current_n > nn) {
+	      break;
+	    }
 	    done.push_back(current_n);
 
 	    MatrixXd c_probs(size,current_n);
@@ -262,6 +265,7 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	  }
 	}
       }
+      myfile.close();
     } else {
       std::cerr << "Unable to open start file " << sfile << std::endl;
       exit(1);
@@ -833,11 +837,13 @@ vector<double> getBnums(int& size,unsigned int& nn,std::string& file,bool& emit,
 	  std::string delim1 = " ";
 	  split(preline1,delim1,preline2);
 	  int current_n = atoi(preline2[0].c_str());
-	  int current_size = atoi(preline2[1].c_str());
-	  if (current_size==size) {
-	    int current_bnum = atoi(preline2[2].c_str());
-	    Tree[current_n][current_bnum] = atof(preline2[3].c_str());
-	    witnessed[current_n]--;
+	  if (current_n < nn) {
+	    int current_size = atoi(preline2[1].c_str());
+	    if (current_size==size) {
+	      int current_bnum = atoi(preline2[2].c_str());
+	      Tree[current_n][current_bnum] = atof(preline2[3].c_str());
+	      witnessed[current_n]--;
+	    }
 	  }
 	}
 	myfile.close();
@@ -1376,11 +1382,11 @@ void getGenePortions(int& csize,unsigned int& samplesize,bool expected,MatrixXd&
 int main(int argc, char** argv) {
   try {
     TCLAP::CmdLine cmd("Fun times", ' ', "0.00");
-    TCLAP::ValueArg<std::string> startProb("","starts","file with starting probabilities, in format output by start_probabilities command",false,"[none]","string");
+    TCLAP::ValueArg<std::string> startProb("","starts","File with starting probabilities, in format output by start_probabilities command",false,"[none]","string");
     cmd.add(startProb);
-    TCLAP::ValueArg<std::string> endProb("","ends","Comma separated list of files with ending probabilities, same order as \"s\" command. If entering only partial list of files, replace missing entries with \"NA\".",false,"[none]","string");
+    TCLAP::ValueArg<std::string> endProb("","ends","File with ending probabilities, in format output by end_probabilities",false,"[none]","string");
     cmd.add(endProb);
-    TCLAP::ValueArg<std::string> bNum("","bnum","Comma separated list of files with number of branches in genealogies, same order as \"s\" command. If entering only partial list of files, replace missing entries with \"NA\".",false,"[none]","string");
+    TCLAP::ValueArg<std::string> bNum("","bnum","File containing probabilities of branch numbers, in format output by branch_numbers",false,"[none]","string");
     cmd.add(bNum);
     TCLAP::ValueArg<std::string> sampleSize("n","sample_size","Comma separated list of total sample sizes to output values for",true,"[none]","string");
     cmd.add(sampleSize);
@@ -1405,7 +1411,7 @@ int main(int argc, char** argv) {
 
     std::string sfiles = startProb.getValue();
     std::string efiles = endProb.getValue();
-    std::string prebfiles = bNum.getValue();
+    std::string bfiles = bNum.getValue();
     std::string presizes = siZes.getValue();
     unsigned int randseed = rSeed.getValue();
     std::string output = outPut.getValue();
@@ -1426,7 +1432,7 @@ int main(int argc, char** argv) {
 
     //std::vector<std::string> sfiles;
     //std::vector<std::string> efiles;
-    std::vector<std::string> bfiles;
+    //std::vector<std::string> bfiles;
 
     unsigned int max_ssize = 1;
     std::vector<unsigned int> sample_sizes;
@@ -1439,17 +1445,19 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (prebfiles.compare("[none]")!=0) {
-      split(prebfiles,delim1,bfiles);
-      if (bfiles.size() != sizes.size()) {
-	std::cerr << "Incorrect number of files for number of branches given number of sizes entered. Enter NAs in string for missing files\n";
-     	exit(1);
-      }
-    } else {
-      for (int ii=0;ii<sizes.size();++ii) {
-     	bfiles.push_back("NA");
-      }
+    if (bfiles.compare("[none]")==0) {
+      bfiles = "NA";
     }
+    //   split(prebfiles,delim1,bfiles);
+    //   if (bfiles.size() != sizes.size()) {
+    // 	std::cerr << "Incorrect number of files for number of branches given number of sizes entered. Enter NAs in string for missing files\n";
+    //  	exit(1);
+    //   }
+    // } else {
+    //  for (int ii=0;ii<sizes.size();++ii) {
+    // 	bfiles.push_back("NA");
+    //  }
+    // }
 
     prgType rng;
     unsigned int seed = time(0);
@@ -1502,7 +1510,7 @@ int main(int argc, char** argv) {
 		  std::cout << "SampleSize BranchSize NumberOfBranches Probability\n";
 		  header=false;
 		}
-		vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
+		vector<double> bnums = getBnums(csize,samplesize,bfiles,emit,output);
 		did_something=true;
 	      }
 	    } else {
@@ -1523,7 +1531,7 @@ int main(int argc, char** argv) {
 		      std::cout << "BranchSize SampleSize ProbR2" << std::endl;
 		      header = false;
 		    }
-		    vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
+		    vector<double> bnums = getBnums(csize,samplesize,bfiles,emit,output);
 		    getR2probs(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
 		    did_something=true;
 		  } else {
@@ -1532,7 +1540,7 @@ int main(int argc, char** argv) {
 			std::cout << "BranchSize SampleSize NumBranches SumLength Variance IndvBranches\n";
 			header=false;
 		      }
-		      vector<double> bnums = getBnums(csize,samplesize,bfiles[re],emit,output);
+		      vector<double> bnums = getBnums(csize,samplesize,bfiles,emit,output);
 		      getGenePortions(csize,samplesize,expected,eprobs,sprobs,bnums,rng,gnum);
 		      did_something=true;
 		    }
