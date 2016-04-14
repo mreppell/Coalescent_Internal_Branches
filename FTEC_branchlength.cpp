@@ -965,7 +965,7 @@ void split(const string& str, const string& delimiters, vector<string>& tokens) 
 }
 
 
-void newGetLengths(vector<Branch_t> & Tree,vector<double> & Recomb_Pos,int num_ext, double bigN) {
+void newGetLengths(vector<Branch_t> & Tree,vector<double> & Recomb_Pos,int num_ext, double bigN,std::vector<int>& sizes) {
     std::sort(Recomb_Pos.begin(),Recomb_Pos.end());    
     int size = Recomb_Pos.size();
     int tree_size = Tree.size();
@@ -1028,10 +1028,12 @@ void newGetLengths(vector<Branch_t> & Tree,vector<double> & Recomb_Pos,int num_e
             double second = atof(kinfo[0].c_str());
             double b_length = 2*bigN*exp(log((*it).second) + log(Tree[h].length));
             total_length+=b_length;
-            if (second==3 || second==5 || second==7)  {
-            
-                    cout << h << "," << kinfo[0] << "," << (*it).second << "," << Tree[h].length << "," << b_length << endl;    
-            }
+	    for (int ii=0;ii<sizes.size();++ii) {
+	      if (second==sizes[ii]) {
+		cout << h << "," << kinfo[0] << "," << (*it).second << "," << Tree[h].length << "," << b_length << endl;    
+		break;
+	      }
+	    }
             kinfo.clear();            
         }
        
@@ -1107,6 +1109,9 @@ int main(int argc, char** argv) {
         cmd.add(mSize);
         TCLAP::ValueArg<unsigned int> rSeed("","seed","Random number generator seed",false,1,"unsigned int");
         cmd.add(rSeed);
+	TCLAP::ValueArg<std::string> oSizes("","osizes","What branch sizes should be output, comma separated list",true,"2","string");
+        cmd.add(oSizes);
+	
          
         cmd.parse(argc,argv);      
         
@@ -1130,7 +1135,19 @@ int main(int argc, char** argv) {
         double fte_exp = fte_constant.getValue();
         if (fte_exp!=-99) {cout << "-c " << fte_exp << " ";}
         vector<double> instgrow = iG.getValue();
-        int inst_empty = 0;
+	vector<std::string> o_sizes;
+	std::string presizes = oSizes.getValue();
+
+
+	std::string d1 = ",";
+	split(presizes,d1,o_sizes);
+	std::vector<int> a_sizes;
+	for (int ii=0;ii<o_sizes.size();++ii) {
+	  a_sizes.push_back(atoi(o_sizes[ii].c_str()));
+	}
+	  
+
+       int inst_empty = 0;
         if (instgrow.empty()) {
             ++inst_empty;
             instgrow.push_back(-1);
@@ -2043,7 +2060,7 @@ int main(int argc, char** argv) {
               cout << "Branch,Descendants,Prop_of_branch,Branch_length,Prop_x_length\n";
           } 
 
-          newGetLengths(Tree,Recomb_Pos,num_ext,bigN);  
+          newGetLengths(Tree,Recomb_Pos,num_ext,bigN,a_sizes);  
           
 
 
