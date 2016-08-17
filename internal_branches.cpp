@@ -237,13 +237,13 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 		if (prev_n==nn) {
 		  exact_done = true;
 		}
-		if (current_n > nn) {
-		  break;
-		}
 		done.push_back(prev_n);
 	      }
 
 	      start_probs[prev_n] = c_probs;
+	      if (current_n > nn) {
+		break;
+	      }
 	    }
 
 	    c_probs.resize(size,current_n);
@@ -254,27 +254,29 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	    current_row = 0;
 	  } else {
  
-	    
-	    std::vector<std::string> break_line;
-	    split(line,delim1,break_line);
-	    if ((break_line.size()==c_probs.cols()) || (break_line.size()==c_probs.cols()+1)) {
-	      int end_val = break_line.size();
-	      if (break_line.size()==c_probs.cols() + 1) {
-		if (break_line[(break_line.size()-1)].empty()) {
-		  end_val--;
-		} else {
-		  std::cerr << "Incorrect number of columns for entry " << line << std::endl;
+	    if (current_row < c_probs.rows()) {
+
+	      std::vector<std::string> break_line;
+	      split(line,delim1,break_line);
+	      if ((break_line.size()==c_probs.cols()) || (break_line.size()==c_probs.cols()+1)) {
+		int end_val = break_line.size();
+		if (break_line.size()==c_probs.cols() + 1) {
+		  if (break_line[(break_line.size()-1)].empty()) {
+		    end_val--;
+		  } else {
+		    std::cerr << "Incorrect number of columns for entry " << line << std::endl;
+		  }
 		}
+		for (int cbegin = 0;cbegin<end_val;++cbegin) {
+		  c_probs(current_row,cbegin) = atof(break_line[cbegin].c_str());
+		}
+		
+	      } else {
+		std::cerr << "Incorrect number of columns in " << sfile << " for " << current_n << std::endl;
+		exit(1);
 	      }
-	      for (int cbegin = 0;cbegin<end_val;++cbegin) {
-		c_probs(current_row,cbegin) = atof(break_line[cbegin].c_str());
-	      }
-   
-	    } else {
-	      std::cerr << "Incorrect number of columns in " << sfile << " for " << current_n << std::endl;
-	      exit(1);
+	      ++current_row;
 	    }
-	    ++current_row;
 	  }
 	} else {
 	  std::cerr << "Error with input file format, found empty line\n";
