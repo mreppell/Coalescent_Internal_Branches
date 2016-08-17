@@ -329,8 +329,8 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 
 	  if (start_probs[current_n].rows()!=1) {
 	    for (int old_row=1;old_row < start_probs[current_n].rows();++old_row) {
-	      start_row = old_row + 2;
-	      if (start_probs[current_n].row(old_row).sum() > 0.999) {
+	      start_row = old_row + 1;
+	      if (start_probs[current_n].row(old_row).sum() > 0) {
 		for (int jj=0;jj<start_probs[current_n].cols();++jj) {
 		  MatrixXd temp1 = start_probs[current_n].row(old_row).col(jj);
 		  c_probs(old_row,jj) = temp1(0,0);
