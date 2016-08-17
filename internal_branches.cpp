@@ -225,11 +225,13 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 
 	    if (current_n==-1) {
 	      current_n = atoi(pre_in_line[1].c_str());
+	      	if (current_n > nn) {
+		  break;
+		}
 	    } else {
 	    
 	      prev_n = current_n;
 	      current_n = atoi(pre_in_line[1].c_str());
-
 
 	      if (current_row==c_probs.rows()) {
 		if (prev_n==nn) {
@@ -301,10 +303,16 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	  Qs.push_back(cQs);
 	}
 	
-	if (done[done_index]==current_n) {
-	  ++done_index;
-	  ++current_n;
-	} else {
+	bool already_done = false;
+	if (done.size() > 0) {
+	  if (done[done_index]==current_n) {
+	    ++done_index;
+	    ++current_n;
+	    already_done = true;
+	  } 
+	}
+
+	if (!already_done) {
 
 	  int start_row = 2;
 	  MatrixXd c_probs(size,current_n);
@@ -442,7 +450,6 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	  }
 	  std::cout << std::endl;
 	}  
-	std::cout << std::endl;
       }
     }
   }
