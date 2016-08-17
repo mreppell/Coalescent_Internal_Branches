@@ -207,62 +207,76 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
     bool exact_done = false;
           
     if (myfile.is_open()) {
-      
+
+      int current_n = -1;
+      int prev_n = -1;
+      std::string predelim = "=";
+      std::string delim1 = " ";
+      int current_row = 0;
+      MatrixXd c_probs(1,1);
+
       while(getline(myfile,line)) {
 
 	std::vector<std::string> pre_in_line;
-	std::string predelim = "=";
-	std::string delim1 = " ";
 	if (!line.empty()) {
 
 	  split(line,predelim,pre_in_line);
 	  if (pre_in_line[0].compare("n")==0) {
-	  
-	    int current_n = atoi(pre_in_line[1].c_str());
-	    if (current_n==nn) {
-	      exact_done = true;
-	    }
-	    if (current_n > nn) {
-	      break;
-	    }
-	    done.push_back(current_n);
 
-	    MatrixXd c_probs(size,current_n);
+	    if (current_n==-1) {
+	      current_n = atoi(pre_in_line[1].c_str());
+	    } else {
+	    
+	      prev_n = current_n;
+	      current_n = atoi(pre_in_line[1].c_str());
+
+
+	      if (current_row==c_probs.rows()) {
+		if (prev_n==nn) {
+		  exact_done = true;
+		}
+		if (current_n > nn) {
+		  break;
+		}
+		done.push_back(prev_n);
+	      }
+
+	      start_probs[prev_n] = c_probs;
+	    }
+
+	    c_probs.resize(size,current_n);
 	    if (current_n <= size) {
 	      c_probs.resize(current_n,Eigen::NoChange);
 	    }
-      
-	    for (int csize=0;csize<c_probs.rows();++csize) {
-	      std::string in_line;
-	      std::vector<std::string> break_line;
+	    c_probs.setZero();
+	    current_row = 0;
+	  } else {
+ 
 	    
-	      getline(myfile,in_line);
-	      if (!in_line.empty()) {
-		split(in_line,delim1,break_line);
-		if ((break_line.size()==c_probs.cols()) || (break_line.size()==c_probs.cols()+1)) {
-		  int end_val = break_line.size();
-		  if (break_line.size()==c_probs.cols() + 1) {
-		    if (break_line[(break_line.size()-1)].empty()) {
-		      end_val--;
-		    } else {
-		      std::cerr << "Incorrect number of columns for entry " << line << std::endl;
-		    }
-		  }
-		  for (int cbegin = 0;cbegin<end_val;++cbegin) {
-		    c_probs(csize,cbegin) = atof(break_line[cbegin].c_str());
-		  }   
+	    std::vector<std::string> break_line;
+	    split(line,delim1,break_line);
+	    if ((break_line.size()==c_probs.cols()) || (break_line.size()==c_probs.cols()+1)) {
+	      int end_val = break_line.size();
+	      if (break_line.size()==c_probs.cols() + 1) {
+		if (break_line[(break_line.size()-1)].empty()) {
+		  end_val--;
 		} else {
-		  std::cerr << "Incorrect number of rows in " << sfile << ", maximum branch size is " << csize << " for sample size " << line << std::endl;
-		  exit(1);
+		  std::cerr << "Incorrect number of columns for entry " << line << std::endl;
 		}
-	      } else {
-		std::cerr << "Incorrect number of rows in " << sfile << ", maximum branch size is " << csize << " for sample size " << line << std::endl;
-		exit(1);
 	      }
+	      for (int cbegin = 0;cbegin<end_val;++cbegin) {
+		c_probs(current_row,cbegin) = atof(break_line[cbegin].c_str());
+	      }
+   
+	    } else {
+	      std::cerr << "Incorrect number of columns in " << sfile << " for " << current_n << std::endl;
+	      exit(1);
 	    }
-	  
-	    start_probs[current_n] = c_probs;
+	    ++current_row;
 	  }
+	} else {
+	  std::cerr << "Error with input file format, found empty line\n";
+	  exit(1);
 	}
       }
       myfile.close();
@@ -291,7 +305,8 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	  ++done_index;
 	  ++current_n;
 	} else {
-    
+
+	  int start_row = 2;
 	  MatrixXd c_probs(size,current_n);
 	  if (current_n <= size) {
 	    c_probs.resize(current_n,Eigen::NoChange);
@@ -302,9 +317,23 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	    c_probs(current_n-1,current_n-1) = 1;
 	  }
 
+	  if (start_probs[current_n].rows()!=1) {
+	    for (int old_row=1;old_row < start_probs[current_n].rows();++old_row) {
+	      start_row = old_row + 2;
+	      if (start_probs[current_n].row(old_row).sum() > 0.999) {
+		for (int jj=0;jj<start_probs[current_n].cols();++jj) {
+		  MatrixXd temp1 = start_probs[current_n].row(old_row).col(jj);
+		  c_probs(old_row,jj) = temp1(0,0);
+		}
+	      } else {
+		break;
+	      }
+	    }
+	  }
+
 	  double c_n = (double) current_n;
       
-	  for (int csize=2;csize<=c_probs.rows();++csize) {
+	  for (int csize=start_row;csize<=c_probs.rows();++csize) {
 	    for (int cbegin=(csize-1);cbegin<c_probs.cols()-1;++cbegin) {
 	      if (csize==2 && cbegin==1) {
 		c_probs((csize-1),cbegin) = 1;
@@ -592,8 +621,7 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
       const char* fn = file.c_str();
       std::ifstream myfile (fn);
       std::string line;
-
-      
+  
       if (myfile.is_open()) {
       
 	while(getline(myfile,line)) {
@@ -646,7 +674,7 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
 	}
 	myfile.close();
       } else {
-	std::cerr << "Unable to open start file " << file << std::endl;
+	std::cerr << "Unable to open ends file " << file << std::endl;
 	exit(1);
       }
 
