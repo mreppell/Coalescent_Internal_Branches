@@ -67,3 +67,6 @@ Packages required for compiling the raw source code
 Tclap - http://tclap.sourceforge.net/
 Boost Random - http://www.boost.org/doc/libs/1_40_0/libs/random/
 Eigen - http://eigen.tuxfamily.org/index.php?title=Main_Page
+
+####Helpful Files
+StartProbabilities_n1000.txt.gz includes the starting probabilities for branches up to size 15 for all sample sizes up to 1000, and can be used to speed up other functions when uncompressed and included with --starts command.
