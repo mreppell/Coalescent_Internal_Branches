@@ -589,7 +589,7 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
 	}
 	myfile.close();
       } else {
-	std::cerr << "Unable to open start file " << file << std::endl;
+	std::cerr << "Unable to open ends file " << file << std::endl;
 	exit(1);
       }
 
@@ -644,6 +644,11 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
 	    if (pre_in_line[0].compare("n")==0) {
 
 	      int current_n = atoi(pre_in_line[1].c_str());
+
+	      if (current_n > nn) { 
+		myfile.close();
+		break;
+	      }
 	      MatrixXd c_probs(current_n-1,current_n);
 	      
 	      for (int csize=0;csize<current_n-1;++csize) {
@@ -694,27 +699,28 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
       
       while (current_n <= nn) {
 
-	if (output.compare("end_probabilities")==0) {
-	  std::cout << "n=" << current_n << std::endl; 
-	}
-	if (done[done_index]==current_n) {
+	bool already_done = false;
+	if (done.size() > 0) {
+	  if (done[done_index]==current_n) {
 
-	  if (output.compare("end_probabilities")==0) {
-	
-	    MatrixXd inprob = end_probs[current_n];
-	    for (int i=0;i<inprob.rows();++i) {
-	      std::cout << inprob(i,0);
-	      for (int j=1;j<inprob.cols();++j) {
-		std::cout << " " << inprob(i,j);
+	    if (output.compare("end_probabilities")==0) {
+	      std::cout << "n=" << current_n << std::endl; 
+	      MatrixXd inprob = end_probs[current_n];
+	      for (int i=0;i<inprob.rows();++i) {
+		std::cout << inprob(i,0);
+		for (int j=1;j<inprob.cols();++j) {
+		  std::cout << " " << inprob(i,j);
+		}
+		std::cout << std::endl;
 	      }
 	      std::cout << std::endl;
 	    }
-	    std::cout << std::endl;
+	    ++done_index;
+	    ++current_n;
+	    already_done = true;
 	  }
-	  ++done_index;
-	  ++current_n;
-	
-	} else {
+	}
+	if (already_done==false) {
 	  
 	  MatrixXd end_probs(current_n-1,current_n);
 	  end_probs.setZero();
@@ -736,6 +742,7 @@ MatrixXd getEndTimes(unsigned int& nn,std::string& file,bool& emit,std::string& 
 	      }
 	      std::cout << endl;
 	    }
+	    std::cout << endl;
 	  }
 	  ++current_n;
 	}
