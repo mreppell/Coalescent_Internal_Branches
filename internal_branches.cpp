@@ -283,6 +283,15 @@ MatrixXd getStartTimes(int& size,unsigned int& nn,bool& emit,std::string& sfile,
 	  exit(1);
 	}
       }
+      if (current_n <= nn) {
+	if (current_row==c_probs.rows()) {
+	  if (current_n==nn) {
+	    exact_done = true;
+	  }
+	  done.push_back(current_n);
+	}
+	start_probs[current_n] = c_probs;
+      }
       myfile.close();
     } else {
       std::cerr << "Unable to open start file " << sfile << std::endl;
@@ -1436,7 +1445,7 @@ int main(int argc, char** argv) {
     cmd.add(sampleSize);
     TCLAP::ValueArg<std::string> siZes("s","sizes","Comma separated list of branch sizes to generate values for. With \"start_probabilities\" command the maximum value from this list is used",true,"[none]","string");
     cmd.add(siZes);
-    TCLAP::ValueArg<std::string> outPut("o","output","Desired output. Options: \"start_probabilities\" \"end_probabilities\" \"branch_numbers\" \"length_distribution\" \"branch_lengths\" \"r2_prob\" \"genealogy_portions\"",true,"[none]","string");
+    TCLAP::ValueArg<std::string> outPut("o","output","Desired output. Options: \"start_probabilities\" \"end_probabilities\" \"branch_numbers\" \"length_distribution\" \"r2_prob\" \"genealogy_portions\"",true,"[none]","string");
     cmd.add(outPut);
     TCLAP::ValueArg<int> branchToGen("","bn","For each size given, this number of random branch lengths will be generated, output is two columns, first with size, second with length",false,1,"int");
     cmd.add(branchToGen);
