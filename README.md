@@ -2,14 +2,28 @@
 Software for calculating the distribution of internal branch lengths in the Kingman Coalescent, as well as related summary statistics.
 
 ## Recommended Installation instructions
-Download and decompress the tarball containing all necessary files. In the resulting directory make a new directory 'build'. In the build directory run cmake on the file 'CMakelists.txt' in the root directory. After cmake completes run the command 'make' and executables for both the internal_branches program and the modified coalescent simulator we used for comparison should be installed.
 
-	 tar -xvf Coalescent_Internal_Branches.tar.gz
-	 cd Coalescent_Internal_Branches_
-	 mkdir build
-	 cd build
-	 cmake ..
-	 make
+###Option 1
+If the program cmake is available on the computer where you are installing, both the internal branches program and the modified coalescent simulator can be installed in the following way. First clone the repository or download the tarball with the necessary files.
+
+In cloned repository:
+   
+   cmake .
+   make   	     
+
+Using tarball:
+      
+      tar -xvf Coalescent_Internal_Branches.tar.gz
+      cd Coalescent_Internal_Branches_
+      cmake .
+      make
+
+###Option 2
+If cmake is unavailable, the programs can be individually compiled using the following commands
+
+   g++ -o FTEC_branchlength -I . FTEC_branchlength.cpp
+   g++ -o internal_branches -I . internal_branches.cpp
+	  
 
 ### Commands 
 
