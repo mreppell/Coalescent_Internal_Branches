@@ -4,12 +4,12 @@
 #include <utility>
 #include<cstdlib>
 #include<tclap/CmdLine.h>
-#include<boost/random/uniform_int.hpp>
-#include<boost/random/uniform_real.hpp>
-#include<boost/random/poisson_distribution.hpp>
-#include<boost/random/exponential_distribution.hpp>
-#include<boost/random/variate_generator.hpp>
-#include<boost/random/mersenne_twister.hpp>
+#include<ib_boost/random/uniform_int.hpp>
+#include<ib_boost/random/uniform_real.hpp>
+#include<ib_boost/random/poisson_distribution.hpp>
+#include<ib_boost/random/exponential_distribution.hpp>
+#include<ib_boost/random/variate_generator.hpp>
+#include<ib_boost/random/mersenne_twister.hpp>
 #include<ctime>
 #include<string>
 #include<algorithm>
