@@ -8,8 +8,8 @@ If the program cmake is available on the computer where you are installing, both
 
 In cloned repository:
    
-   cmake .
-   make   	     
+      cmake .
+      make   	     
 
 Using tarball:
       
@@ -19,10 +19,10 @@ Using tarball:
       make
 
 ###Option 2
-If cmake is unavailable, the programs can be individually compiled using the following commands
+If cmake is unavailable, the programs can be individually compiled using the following commands:
 
-   g++ -o FTEC_branchlength -I . FTEC_branchlength.cpp
-   g++ -o internal_branches -I . internal_branches.cpp
+      g++ -o FTEC_branchlength -I . FTEC_branchlength.cpp
+      g++ -o internal_branches -I . internal_branches.cpp
 	  
 
 ### Commands 
