@@ -3,7 +3,7 @@ Software for calculating the distribution of internal branch lengths in the King
 
 ## Recommended Installation instructions
 
-###Option 1
+### Option 1
 If the program cmake is available on the computer where you are installing, both the internal branches program and the modified coalescent simulator can be installed in the following way. First clone the repository or download the tarball with the necessary files.
 
 In cloned repository:
@@ -18,7 +18,7 @@ Using tarball:
       cmake .
       make
 
-###Option 2
+### Option 2
 If cmake is unavailable, the programs can be individually compiled using the following commands:
 
       g++ -o FTEC_branchlength -I . FTEC_branchlength.cpp
